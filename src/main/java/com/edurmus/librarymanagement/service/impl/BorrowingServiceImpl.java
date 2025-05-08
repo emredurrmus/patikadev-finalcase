@@ -1,0 +1,202 @@
+package com.edurmus.librarymanagement.service.impl;
+
+import com.edurmus.librarymanagement.exception.book.BookNotAvailableException;
+import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
+import com.edurmus.librarymanagement.exception.borrow.BorrowingNotFoundException;
+import com.edurmus.librarymanagement.model.dto.response.BorrowingDTO;
+import com.edurmus.librarymanagement.model.dto.response.ReturnBookResponse;
+import com.edurmus.librarymanagement.model.entity.Book;
+import com.edurmus.librarymanagement.model.entity.Borrowing;
+import com.edurmus.librarymanagement.model.entity.User;
+import com.edurmus.librarymanagement.model.enums.BorrowingStatus;
+import com.edurmus.librarymanagement.model.mapper.BorrowingMapper;
+import com.edurmus.librarymanagement.repository.BookRepository;
+import com.edurmus.librarymanagement.repository.BorrowingRepository;
+import com.edurmus.librarymanagement.repository.UserRepository;
+import com.edurmus.librarymanagement.service.BorrowingService;
+import com.edurmus.librarymanagement.util.SecurityUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@Slf4j
+public class BorrowingServiceImpl implements BorrowingService {
+
+    private final BookRepository bookRepository;
+    private final BorrowingRepository borrowingRepository;
+    private final UserRepository userRepository;
+
+    @Autowired
+    public BorrowingServiceImpl(BookRepository bookRepository, BorrowingRepository borrowingRepository,
+                                UserRepository userRepository) {
+        this.bookRepository = bookRepository;
+        this.borrowingRepository = borrowingRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public BorrowingDTO borrowBook(Long bookId) {
+        User user = getCurrentUser();
+        log.info("User '{}' attempting to borrow book {}",  user.getUsername(), bookId);
+        Book book = getAvailableBookOrThrow(bookId);
+
+        book.setAvailable(false);
+        bookRepository.save(book);
+
+        Borrowing borrowing = createBorrowing(user, book);
+        Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
+        return BorrowingMapper.INSTANCE.toDto(savedBorrowing);
+    }
+
+    private Book getAvailableBookOrThrow(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + bookId));
+
+        if (!book.isAvailable()) {
+            throw new BookNotAvailableException("The book is not available for borrowing");
+        }
+        return book;
+    }
+
+
+    private Borrowing createBorrowing(User user, Book book) {
+        return Borrowing.builder()
+                .user(user)
+                .book(book)
+                .borrowingDate(LocalDate.now())
+                .dueDate(LocalDate.now().plusWeeks(2))
+                .status(BorrowingStatus.BORROWED)
+                .build();
+    }
+
+
+
+    @Override
+    public ReturnBookResponse returnBook(Long borrowingId) {
+        Optional<Borrowing> borrowingOptional = borrowingRepository.findById(borrowingId);
+        Borrowing borrowing = borrowingOptional.orElseThrow(() -> new BorrowingNotFoundException("Borrowing record not found with id: " + borrowingId));
+
+        updateBookAvailability(borrowing.getBook());
+        borrowing.setReturnDate(LocalDate.now());
+
+        boolean isOverDue = borrowing.isOverdue();
+        BigDecimal fine = BigDecimal.ZERO;
+
+        if (isOverDue) {
+            fine = handleOverdueAndGetFine(borrowing);
+            borrowing.setStatus(BorrowingStatus.OVERDUE);
+        } else {
+            borrowing.setStatus(BorrowingStatus.RETURNED);
+        }
+        Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+        log.info("User '{}' is returning book with borrowing ID: {}", borrowing.getUser().getUsername(), borrowingId);
+        BorrowingDTO bookDTO = BorrowingMapper.INSTANCE.toDto(savedBorrowing);
+        return new ReturnBookResponse(bookDTO, isOverDue, fine);
+    }
+
+    private void updateBookAvailability(Book book) {
+        book.setAvailable(true);
+        bookRepository.save(book);
+    }
+
+    private BigDecimal handleOverdueAndGetFine(Borrowing borrowing) {
+        User user = borrowing.getUser();
+        BigDecimal fine = borrowing.calculateOverdueFine();
+        user.setOverdueFine(user.getOverdueFine().add(fine));
+
+        log.warn("User '{}' has overdue book. Fine applied: {}", user.getUsername(), fine);
+
+        long overdueCount = borrowingRepository.countByUserIdAndReturnDateAfterDueDate(user.getId());
+        if (overdueCount >= 2) {
+            user.setEnabled(false);
+        }
+
+        userRepository.save(user);
+        log.info("User '{}' has been disabled due to multiple overdue books.", user.getUsername());
+        return fine;
+    }
+
+    @Override
+    public List<BorrowingDTO> getUserBorrowingHistory() {
+        String username = getCurrentUser().getUsername();
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("User not found with this username : " + username));
+
+        List<Borrowing> borrowings = borrowingRepository.findByUser(user);
+        return borrowings.stream().map(BorrowingMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BorrowingDTO> getAllBorrowingHistory() {
+        List<Borrowing> borrowings = borrowingRepository.findAll();
+        return borrowings.stream().map(BorrowingMapper.INSTANCE::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public String generateOverdueReport() {
+        List<Borrowing> overdueList = findOverdueBorrowings();
+
+        int totalOverdue = overdueList.size();
+        Map<User, Long> userOverdueCounts = groupBorrowingsByUser(overdueList);
+
+        StringBuilder reportBuilder = buildReportHeader(totalOverdue, userOverdueCounts.size());
+        appendUserOverdueDetails(userOverdueCounts, reportBuilder);
+
+        appendReportFooter(reportBuilder);
+
+        log.info("Generating overdue book report...");
+        return reportBuilder.toString();
+    }
+
+    private StringBuilder buildReportHeader(int totalOverdue, int totalUsersWithOverdues) {
+        return new StringBuilder()
+                .append("""
+                    OVERDUE BOOK REPORT
+                    ----------------------
+                    Total Overdue Books: %d
+                    Total Users with Overdues: %d
+
+                    """.formatted(totalOverdue, totalUsersWithOverdues));
+    }
+
+    private void appendUserOverdueDetails(Map<User, Long> userOverdueCounts, StringBuilder reportBuilder) {
+        for (Map.Entry<User, Long> entry : userOverdueCounts.entrySet()) {
+            User user = entry.getKey();
+            Long count = entry.getValue();
+            reportBuilder.append(" - %s (%s): %d book(s) overdue\n".formatted(
+                    user.getFirstName() + " " + user.getLastName(), user.getEmail(), count));
+        }
+    }
+
+    private void appendReportFooter(StringBuilder reportBuilder) {
+        reportBuilder.append("\nGenerated at: %s".formatted(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+    }
+
+    private Map<User, Long> groupBorrowingsByUser(List<Borrowing> overdueList) {
+        return overdueList.stream()
+                .collect(Collectors.groupingBy(Borrowing::getUser, Collectors.counting()));
+    }
+
+    private List<Borrowing> findOverdueBorrowings() {
+        return borrowingRepository.findByReturnDateIsNullAndDueDateBefore(LocalDate.now());
+    }
+
+    private User getCurrentUser() {
+        String username = SecurityUtils.getCurrentUserName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with this username: " + username));
+    }
+
+}

@@ -1,0 +1,110 @@
+package com.edurmus.librarymanagement.service.impl;
+
+import com.edurmus.librarymanagement.exception.user.EmailAlreadyExistException;
+import com.edurmus.librarymanagement.exception.user.UserNotFoundException;
+import com.edurmus.librarymanagement.exception.user.UsernameAlreadyExistException;
+import com.edurmus.librarymanagement.model.dto.request.UserRequest;
+import com.edurmus.librarymanagement.model.dto.request.UserRoleRequest;
+import com.edurmus.librarymanagement.model.dto.response.UserResponse;
+import com.edurmus.librarymanagement.model.entity.User;
+import com.edurmus.librarymanagement.model.enums.UserRole;
+import com.edurmus.librarymanagement.model.mapper.UserMapper;
+import com.edurmus.librarymanagement.repository.RoleRepository;
+import com.edurmus.librarymanagement.repository.UserRepository;
+import com.edurmus.librarymanagement.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final RoleRepository roleRepository;
+
+    @Override
+    public UserResponse register(UserRequest request) {
+        validateUserRequest(request);
+        User user = new User();
+        user.setUsername(request.username());
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRoles(roleRepository.findByUserRole(UserRole.ROLE_PATRON));
+        userRepository.save(user);
+        return userMapper.toDto(user);
+    }
+
+    private void validateUserRequest(UserRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new EmailAlreadyExistException("User already exists with email: " + request.email());
+        }
+        if (userRepository.existsByUsername(request.username())) {
+            throw new UsernameAlreadyExistException("User already exists with username: " + request.username());
+        }
+    }
+
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public UserResponse getById(Long id) {
+        return userMapper.toDto(userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found")));
+    }
+
+    @Override
+    public UserResponse updateUser(Long id, UserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        if (request.password() != null) {
+            user.setPassword(passwordEncoder.encode(request.password()));
+        }
+
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+
+    @Override
+    public UserResponse updateUserRole(Long id, UserRoleRequest userRoleRequest) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        UserRole newRole = UserRole.valueOf(userRoleRequest.role().toUpperCase());
+
+        user.setRoles(roleRepository.findByUserRole(newRole));
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+
+
+
+    @Override
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
+        User user = userRepository.getReferenceById(id);
+        user.setActive(false);
+        userRepository.save(user);
+        log.info("User with ID {} set as inactive", id);
+    }
+}
+

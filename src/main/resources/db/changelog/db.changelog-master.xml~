@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <include file="changes/initial-schema.xml" relativeToChangelogFile="true"/>
+
+<!--    <changeSet author="emre" id="20250505-1">-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="CREATE_BOOK" />-->
+<!--            <column name="description" value="Kitap oluşturma yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="RETURN_BOOK" />-->
+<!--            <column name="description" value="Kitap iade yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="UPDATE_BOOK" />-->
+<!--            <column name="description" value="Kitap güncelleme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="DELETE_BOOK" />-->
+<!--            <column name="description" value="Kitap silme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="BORROW_BOOK" />-->
+<!--            <column name="description" value="Kitap ödünç alma yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="VIEW_BOOK" />-->
+<!--            <column name="description" value="Kitap görüntüleme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="MANAGE_USER" />-->
+<!--            <column name="description" value="Kullanıcı yönetme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="MANAGE_ROLE" />-->
+<!--            <column name="description" value="Rol yönetme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="VIEW_USER_HISTORY" />-->
+<!--            <column name="description" value="Kullanıcı geçmişi görüntüleme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="CREATE_USER" />-->
+<!--            <column name="description" value="Kullanıcı oluşturma yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="UPDATE_USER" />-->
+<!--            <column name="description" value="Kullanıcı güncelleme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--        <insert tableName="privilege">-->
+<!--            <column name="privilege_type" value="DELETE_USER" />-->
+<!--            <column name="description" value="Kullanıcı silme yetkisi" />-->
+<!--            <column name="active" valueBoolean="true" />-->
+<!--        </insert>-->
+<!--    </changeSet>-->
+
+
+</databaseChangeLog>

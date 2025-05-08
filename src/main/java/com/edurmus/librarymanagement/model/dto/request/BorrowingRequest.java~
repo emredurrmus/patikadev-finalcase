@@ -1,0 +1,4 @@
+package com.edurmus.librarymanagement.model.dto.request;
+
+public class BorrowingRequest {
+}
