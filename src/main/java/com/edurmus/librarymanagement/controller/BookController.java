@@ -1,5 +1,6 @@
 package com.edurmus.librarymanagement.controller;
 
+import com.edurmus.librarymanagement.model.dto.request.BookRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,9 +32,9 @@ public class BookController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
-    public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookResponse bookResponse) {
-        log.info("Creating new book: {}", bookResponse.title());
-        BookResponse createdBook = bookService.save(bookResponse);
+    public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookRequest bookRequest) {
+        log.info("Creating new book: {}", bookRequest.title());
+        BookResponse createdBook = bookService.save(bookRequest);
         return ResponseEntity.status(201).body(createdBook);
     }
 
@@ -44,9 +45,9 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @Valid @RequestBody BookResponse bookDTO) {
+    public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @Valid @RequestBody BookRequest bookRequest) {
         log.info("Updating book with id: {}", id);
-        BookResponse updatedBook = bookService.update(id, bookDTO);
+        BookResponse updatedBook = bookService.update(id, bookRequest);
         return ResponseEntity.ok(updatedBook);
     }
 

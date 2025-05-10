@@ -35,12 +35,10 @@ public class Borrowing extends BaseEntity {
 
     private LocalDate returnDate;
 
-    private String description;
-
     private BigDecimal fine;
 
     public boolean isOverdue() {
-        return returnDate != null && dueDate != null && returnDate.isAfter(dueDate);
+        return returnDate != null && returnDate.isAfter(dueDate);
     }
 
     public BigDecimal calculateOverdueFine() {

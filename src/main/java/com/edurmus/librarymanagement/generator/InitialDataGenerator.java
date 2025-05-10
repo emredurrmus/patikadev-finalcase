@@ -38,8 +38,6 @@ public class InitialDataGenerator {
             createLibrarianUser();
             log.info("Librarian user created");
 
-            createPatronUser();
-            log.info("Patron user created");
         }
     }
 
@@ -47,21 +45,10 @@ public class InitialDataGenerator {
         Set<Role> librarianRole = roleRepository.findByUserRole(UserRole.ROLE_LIBRARIAN);
         User user = User.builder()
                 .username("user")
-                .password(passwordEncoder.encode("pw135"))
+                .password(passwordEncoder.encode("pw135!."))
                 .email("user@gmail.com")
+                .enabled(true)
                 .roles(librarianRole)
-                .build();
-        user.setCreatedBy(DEFAULT_CREATED_BY);
-        userRepository.save(user);
-    }
-
-    private void createPatronUser() {
-        Set<Role> patronRole = roleRepository.findByUserRole(UserRole.ROLE_PATRON);
-        User user = User.builder()
-                .username("emre")
-                .password(passwordEncoder.encode("1234"))
-                .email("edurrmus@gmail.com")
-                .roles(patronRole)
                 .build();
         user.setCreatedBy(DEFAULT_CREATED_BY);
         userRepository.save(user);

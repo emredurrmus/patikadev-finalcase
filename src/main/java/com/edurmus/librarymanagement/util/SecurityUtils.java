@@ -11,11 +11,7 @@ public class SecurityUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-
-            if (principal instanceof User user) {
-                return user.getUsername();
-            }
+            return authentication.getName();
         }
         return null;
     }

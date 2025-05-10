@@ -43,7 +43,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Login user", description = "Allows user to login")
     @ApiResponse(responseCode = "200", description = "User successfully logged in")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> login(@RequestBody @Valid AuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );
@@ -59,7 +59,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register a new user", description = "Allows librarian user to register a new user")
     @ApiResponse(responseCode = "201", description = "User successfully registered")
-    public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody UserRequest userRequest) {
+    public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRequest userRequest) {
         log.info("Registering user: {}", userRequest.email());
         UserResponse savedUser = userService.register(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);

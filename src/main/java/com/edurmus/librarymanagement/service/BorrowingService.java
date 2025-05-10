@@ -1,13 +1,14 @@
 package com.edurmus.librarymanagement.service;
 
 import com.edurmus.librarymanagement.model.dto.response.BorrowingDTO;
+import com.edurmus.librarymanagement.model.dto.response.BorrowingSuccessResponse;
 import com.edurmus.librarymanagement.model.dto.response.ReturnBookResponse;
 
 import java.util.List;
 
 public interface BorrowingService {
 
-    BorrowingDTO borrowBook(Long bookId);
+    BorrowingSuccessResponse borrowBook(Long bookId);
 
     ReturnBookResponse returnBook(Long borrowingId);
 

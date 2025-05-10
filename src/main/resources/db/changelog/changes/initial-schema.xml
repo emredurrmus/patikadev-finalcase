@@ -26,7 +26,7 @@
             <column name="isbn" type="VARCHAR(13)" >
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="published_date" type="TIMESTAMP WITH TIME ZONE" />
+            <column name="published_date" type="DATE" />
             <column name="price" type="DECIMAL(10,2)" />
             <column name="description" type="VARCHAR(255)" />
             <column name="genre" type="VARCHAR(50)" />
@@ -107,6 +107,34 @@
                                  referencedColumnNames="id"
                                  constraintName="fk_user_roles_role"
                                  onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20253004-5" author="emre">
+        <createTable tableName="borrowing">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="borrowingPK"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="book_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" />
+            <column name="borrowing_date" type="DATE" />
+            <column name="due_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="return_date" type="DATE" />
+            <column name="fine" type="DECIMAL(10,2)" />
+        </createTable>
     </changeSet>
 
 

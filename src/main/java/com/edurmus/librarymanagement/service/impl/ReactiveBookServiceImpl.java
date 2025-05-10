@@ -2,6 +2,7 @@ package com.edurmus.librarymanagement.service.impl;
 
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.book.BookSaveException;
+import com.edurmus.librarymanagement.model.dto.request.BookRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.model.entity.Book;
 import com.edurmus.librarymanagement.model.mapper.BookMapper;
@@ -24,9 +25,9 @@ public class ReactiveBookServiceImpl implements ReactiveBookService {
     private final BookRepository bookRepository;
 
     @Override
-    public Mono<BookResponse> save(BookResponse bookDTO) {
+    public Mono<BookResponse> save(BookRequest bookRequest) {
         return Mono.fromCallable(() -> {
-                    Book book = BookMapper.INSTANCE.toEntity(bookDTO);
+                    Book book = BookMapper.INSTANCE.toEntity(bookRequest);
                     book.setAvailable(true);
                     return bookRepository.save(book);
                 })
@@ -37,11 +38,11 @@ public class ReactiveBookServiceImpl implements ReactiveBookService {
     }
 
     @Override
-    public Mono<BookResponse> update(Long id, BookResponse bookDTO) {
+    public Mono<BookResponse> update(Long id, BookRequest bookRequest) {
         return Mono.fromCallable(() -> {
                     Book book = bookRepository.findById(id)
                             .orElseThrow(() -> new BookNotFoundException("Book not found for the update with id: " + id));
-                    BookMapper.INSTANCE.updateEntity(book, bookDTO);
+                    BookMapper.INSTANCE.updateEntity(book, bookRequest);
                     return bookRepository.save(book);
                 })
                 .subscribeOn(Schedulers.boundedElastic())

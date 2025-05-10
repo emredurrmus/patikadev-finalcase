@@ -34,7 +34,7 @@ Make sure you have the following installed on your system:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <your_project_repository_url>
+    git clone <https://github.com/emredurrmus/patikadev-finalcase.git>
     cd librarymanagement
     ```
 
@@ -211,6 +211,7 @@ erDiagram
         VARCHAR genre
         BOOLEAN is_available
     }
+    
     users {
         BIGINT id PK
         VARCHAR username UNIQUE
@@ -222,10 +223,12 @@ erDiagram
         DECIMAL overdue_fine
         BOOLEAN enabled
     }
+    
     role {
         BIGINT id PK
         VARCHAR user_role
     }
+    
     user_roles {
         BIGINT user_id FK
         BIGINT role_id FK
@@ -239,6 +242,5 @@ erDiagram
         DATE borrowing_date
         DATE due_date
         DATE return_date
-        TEXT description
         DECIMAL fine
     }

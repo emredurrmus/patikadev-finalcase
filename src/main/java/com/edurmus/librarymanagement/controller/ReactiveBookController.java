@@ -1,5 +1,6 @@
 package com.edurmus.librarymanagement.controller;
 
+import com.edurmus.librarymanagement.model.dto.request.BookRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.service.ReactiveBookService;
 import jakarta.validation.Valid;
@@ -22,16 +23,16 @@ public class ReactiveBookController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<BookResponse> createBook(@Valid @RequestBody BookResponse bookDTO) {
-        log.info("Request received to add a new book: {}", bookDTO.title());
-         return bookService.save(bookDTO);
+    public Mono<BookResponse> createBook(@Valid @RequestBody BookRequest bookRequest) {
+        log.info("Request received to add a new book: {}", bookRequest.title());
+         return bookService.save(bookRequest);
     }
 
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<BookResponse>> updateBook(@PathVariable Long id, @Valid @RequestBody BookResponse bookDTO) {
+    public Mono<ResponseEntity<BookResponse>> updateBook(@PathVariable Long id, @Valid @RequestBody BookRequest bookRequest) {
         log.info("Request received to update book with id: {}", id);
-        return bookService.update(id, bookDTO)
+        return bookService.update(id, bookRequest)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }

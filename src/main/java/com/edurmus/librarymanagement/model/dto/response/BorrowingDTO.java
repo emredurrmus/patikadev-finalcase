@@ -25,5 +25,4 @@ public class BorrowingDTO {
     private LocalDate dueDate;
     private LocalDate returnDate;
     private BigDecimal fine;
-    private String description;
 }

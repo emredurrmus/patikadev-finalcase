@@ -13,7 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -32,7 +32,7 @@ public class Book extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String isbn;
 
-    private LocalDateTime publishedDate;
+    private LocalDate publishedDate;
 
     private BigDecimal price;
 

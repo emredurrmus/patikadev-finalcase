@@ -1,6 +1,7 @@
 package com.edurmus.librarymanagement.controller;
 
 import com.edurmus.librarymanagement.model.dto.response.BorrowingDTO;
+import com.edurmus.librarymanagement.model.dto.response.BorrowingSuccessResponse;
 import com.edurmus.librarymanagement.model.dto.response.ReturnBookResponse;
 import com.edurmus.librarymanagement.service.BorrowingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,8 +29,8 @@ public class BorrowingController {
     @PostMapping("/borrow/{bookId}")
     @Operation(summary = "Borrow a book", description = "Allows a user to borrow a book from the library")
     @ApiResponse(responseCode = "200", description = "Book borrowed successfully")
-    public ResponseEntity<BorrowingDTO> borrowBook(@PathVariable Long bookId) {
-        BorrowingDTO borrowing = borrowingService.borrowBook(bookId);
+    public ResponseEntity<BorrowingSuccessResponse> borrowBook(@PathVariable Long bookId) {
+        BorrowingSuccessResponse borrowing = borrowingService.borrowBook(bookId);
         return ResponseEntity.status(HttpStatus.CREATED).body(borrowing);
     }
 
@@ -42,7 +43,7 @@ public class BorrowingController {
         return ResponseEntity.ok(returnBookResponse);
     }
 
-
+    @PreAuthorize("hasRole('PATRON') or hasRole('LIBRARIAN')")
     @GetMapping("/history")
     @Operation(summary = "Get user's borrowing history", description = "Retrieves the borrowing history of the logged-in user")
     @ApiResponse(responseCode = "200", description = "Borrowing history fetched successfully")

@@ -4,6 +4,7 @@ import com.edurmus.librarymanagement.exception.book.BookNotAvailableException;
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.borrow.BorrowingNotFoundException;
 import com.edurmus.librarymanagement.model.dto.response.BorrowingDTO;
+import com.edurmus.librarymanagement.model.dto.response.BorrowingSuccessResponse;
 import com.edurmus.librarymanagement.model.dto.response.ReturnBookResponse;
 import com.edurmus.librarymanagement.model.entity.Book;
 import com.edurmus.librarymanagement.model.entity.Borrowing;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,7 +48,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    public BorrowingDTO borrowBook(Long bookId) {
+    public BorrowingSuccessResponse borrowBook(Long bookId) {
         User user = getCurrentUser();
         log.info("User '{}' attempting to borrow book {}",  user.getUsername(), bookId);
         Book book = getAvailableBookOrThrow(bookId);
@@ -57,7 +59,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         Borrowing borrowing = createBorrowing(user, book);
         Borrowing savedBorrowing = borrowingRepository.save(borrowing);
 
-        return BorrowingMapper.INSTANCE.toDto(savedBorrowing);
+        return BorrowingMapper.INSTANCE.toSuccessResponse(savedBorrowing);
     }
 
     private Book getAvailableBookOrThrow(Long bookId) {
@@ -78,17 +80,18 @@ public class BorrowingServiceImpl implements BorrowingService {
                 .borrowingDate(LocalDate.now())
                 .dueDate(LocalDate.now().plusWeeks(2))
                 .status(BorrowingStatus.BORROWED)
+                .fine(BigDecimal.ZERO)
                 .build();
     }
 
 
 
     @Override
+    @Transactional
     public ReturnBookResponse returnBook(Long borrowingId) {
         Optional<Borrowing> borrowingOptional = borrowingRepository.findById(borrowingId);
         Borrowing borrowing = borrowingOptional.orElseThrow(() -> new BorrowingNotFoundException("Borrowing record not found with id: " + borrowingId));
 
-        updateBookAvailability(borrowing.getBook());
         borrowing.setReturnDate(LocalDate.now());
 
         boolean isOverDue = borrowing.isOverdue();
@@ -100,10 +103,12 @@ public class BorrowingServiceImpl implements BorrowingService {
         } else {
             borrowing.setStatus(BorrowingStatus.RETURNED);
         }
+        borrowing.setFine(fine);
         Borrowing savedBorrowing = borrowingRepository.save(borrowing);
         log.info("User '{}' is returning book with borrowing ID: {}", borrowing.getUser().getUsername(), borrowingId);
-        BorrowingDTO bookDTO = BorrowingMapper.INSTANCE.toDto(savedBorrowing);
-        return new ReturnBookResponse(bookDTO, isOverDue, fine);
+        BorrowingDTO borrowingDTO = BorrowingMapper.INSTANCE.toDto(savedBorrowing);
+        updateBookAvailability(borrowing.getBook());
+        return new ReturnBookResponse(borrowingDTO, isOverDue, fine);
     }
 
     private void updateBookAvailability(Book book) {
@@ -112,10 +117,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     private BigDecimal handleOverdueAndGetFine(Borrowing borrowing) {
+        checkUserHasBorrowing(borrowing);
+
         User user = borrowing.getUser();
         BigDecimal fine = borrowing.calculateOverdueFine();
         user.setOverdueFine(user.getOverdueFine().add(fine));
-
         log.warn("User '{}' has overdue book. Fine applied: {}", user.getUsername(), fine);
 
         long overdueCount = borrowingRepository.countByUserIdAndReturnDateAfterDueDate(user.getId());
@@ -128,13 +134,16 @@ public class BorrowingServiceImpl implements BorrowingService {
         return fine;
     }
 
+    private void checkUserHasBorrowing(Borrowing borrowing) {
+        String username = getCurrentUser().getUsername();
+        if (!borrowing.getUser().getUsername().equals(username)) {
+            throw new BorrowingNotFoundException("This user does not have a borrowing record with id: " + borrowing.getId());
+        }
+    }
+
     @Override
     public List<BorrowingDTO> getUserBorrowingHistory() {
-        String username = getCurrentUser().getUsername();
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("User not found with this username : " + username));
-
-        List<Borrowing> borrowings = borrowingRepository.findByUser(user);
+        List<Borrowing> borrowings = borrowingRepository.findByUser(getCurrentUser());
         return borrowings.stream().map(BorrowingMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
 

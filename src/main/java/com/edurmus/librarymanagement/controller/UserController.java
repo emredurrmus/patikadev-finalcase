@@ -2,8 +2,8 @@ package com.edurmus.librarymanagement.controller;
 
 import com.edurmus.librarymanagement.model.dto.request.UserRequest;
 import com.edurmus.librarymanagement.model.dto.request.UserRoleRequest;
-import com.edurmus.librarymanagement.model.dto.response.UserResponse;
-import com.edurmus.librarymanagement.model.enums.UserRole;
+import com.edurmus.librarymanagement.model.dto.response.UserDetailsResponse;
+import com.edurmus.librarymanagement.model.dto.response.UserRoleResponse;
 import com.edurmus.librarymanagement.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,28 +28,28 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Get all users (Librarian only)", description = "Retrieves a list of all users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<List<UserDetailsResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Get user by ID (Librarian only)", description = "Retrieves a user by its ID")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDetailsResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getById(id));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Update user by ID (Librarian only)", description = "Allows librarian user to update a user")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest userRequest) {
+    public ResponseEntity<UserDetailsResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest userRequest) {
         return ResponseEntity.ok(userService.updateUser(id, userRequest));
     }
 
     @PutMapping("/role/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Update user role by ID (Librarian only)", description = "Allows librarian user to update the role of another user")
-    public ResponseEntity<UserResponse> updateUserRole(@Valid @RequestBody UserRoleRequest userRoleRequest, @PathVariable Long id) {
+    public ResponseEntity<UserRoleResponse> updateUserRole(@Valid @RequestBody UserRoleRequest userRoleRequest, @PathVariable Long id) {
         return ResponseEntity.ok(userService.updateUserRole(id, userRoleRequest));
     }
 

@@ -2,6 +2,7 @@ package com.edurmus.librarymanagement.service.impl;
 
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.book.BookSaveException;
+import com.edurmus.librarymanagement.model.dto.request.BookRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.model.entity.Book;
 import com.edurmus.librarymanagement.model.mapper.BookMapper;
@@ -22,9 +23,9 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
 
     @Override
-    public BookResponse save(BookResponse bookResponse) {
+    public BookResponse save(BookRequest bookRequest) {
         try {
-            Book book = BookMapper.INSTANCE.toEntity(bookResponse);
+            Book book = BookMapper.INSTANCE.toEntity(bookRequest);
             book.setAvailable(true);
             Book savedBook = bookRepository.save(book);
             log.info("Book saved: {}", savedBook.getTitle());
@@ -35,11 +36,11 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponse update(Long id, BookResponse bookResponse) {
+    public BookResponse update(Long id, BookRequest bookRequest) {
         try {
             Book book = bookRepository.findById(id)
                     .orElseThrow(() -> new BookNotFoundException("Book not found for the update with id: " + id));
-            BookMapper.INSTANCE.updateEntity(book, bookResponse);
+            BookMapper.INSTANCE.updateEntity(book, bookRequest);
             Book updatedBook = bookRepository.save(book);
             log.info("Book updated: {}", updatedBook.getTitle());
             return BookMapper.INSTANCE.toDto(updatedBook);
@@ -49,14 +50,13 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Void deleteById(Long id) {
+    public void deleteById(Long id) {
         try {
             Book book = bookRepository.findById(id)
                     .orElseThrow(() -> new BookNotFoundException("Book not found for the delete with id: " + id));
             book.setActive(false);
             bookRepository.save(book);
             log.info("Book with ID {} set as inactive", book.getId());
-            return null;
         } catch (Exception e) {
             throw new BookSaveException("Failed to delete the book: " + e.getMessage(), e);
         }
