@@ -211,7 +211,7 @@ erDiagram
         VARCHAR genre
         BOOLEAN is_available
     }
-    
+
     users {
         BIGINT id PK
         VARCHAR username UNIQUE
@@ -223,17 +223,18 @@ erDiagram
         DECIMAL overdue_fine
         BOOLEAN enabled
     }
-    
+
     role {
         BIGINT id PK
         VARCHAR user_role
     }
-    
+
     user_roles {
         BIGINT user_id FK
         BIGINT role_id FK
         PRIMARY KEY (user_id, role_id)
     }
+
     borrowing {
         BIGINT id PK
         BIGINT user_id FK

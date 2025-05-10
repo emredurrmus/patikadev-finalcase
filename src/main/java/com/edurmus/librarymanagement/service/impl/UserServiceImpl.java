@@ -66,13 +66,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetailsResponse getById(Long id) {
         return userMapper.toDetailsDto(userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found")));
+                .orElseThrow(() -> new UserNotFoundException("User not found")));
     }
 
     @Override
     public UserDetailsResponse updateUser(Long id, UserRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         user.setUsername(request.username());
         user.setFirstName(request.firstName());
@@ -104,7 +104,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("User not found");
         }
         User user = userRepository.getReferenceById(id);
         user.setActive(false);
