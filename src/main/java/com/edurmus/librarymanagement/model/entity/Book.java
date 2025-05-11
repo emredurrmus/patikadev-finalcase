@@ -1,7 +1,6 @@
 package com.edurmus.librarymanagement.model.entity;
 
 
-import com.edurmus.librarymanagement.model.annotation.SearchableField;
 import com.edurmus.librarymanagement.model.enums.BookGenre;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,7 +17,6 @@ import java.time.LocalDate;
 @Entity
 @Data
 @Builder
-@SearchableField({"title", "author", "isbn", "genre"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Book extends BaseEntity {

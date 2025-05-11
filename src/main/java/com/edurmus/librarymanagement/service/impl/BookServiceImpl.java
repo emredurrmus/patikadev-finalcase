@@ -3,13 +3,19 @@ package com.edurmus.librarymanagement.service.impl;
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.book.BookSaveException;
 import com.edurmus.librarymanagement.model.dto.request.BookRequest;
+import com.edurmus.librarymanagement.model.dto.request.BookSearchRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.model.entity.Book;
 import com.edurmus.librarymanagement.model.mapper.BookMapper;
 import com.edurmus.librarymanagement.repository.BookRepository;
 import com.edurmus.librarymanagement.service.BookService;
+import com.edurmus.librarymanagement.service.specification.GenericSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -99,5 +105,16 @@ public class BookServiceImpl implements BookService {
         } catch (Exception e) {
             throw new BookNotFoundException("Error fetching available books: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Page<BookResponse> searchBooks(BookSearchRequest bookSearchRequest, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<Book> specification = new GenericSpecification<BookSearchRequest, Book>()
+                .build(bookSearchRequest);
+
+        return bookRepository.findAll(specification, pageable)
+                .map(BookMapper.INSTANCE::toDto);
     }
 }
