@@ -32,14 +32,16 @@ Make sure you have the following installed on your system:
 
 ### Running the Application
 
+#### 🔧 Option 1: Manual Run with Maven
+
 1.  **Clone the Repository:**
     ```bash
-    git clone <https://github.com/emredurrmus/patikadev-finalcase.git>
+    git clone https://github.com/emredurrmus/patikadev-finalcase.git
     cd librarymanagement
     ```
 
 2.  **Configure Database:**
-    * For **PostgreSQL**, update the database connection details in `src/main/resources/application.properties` or `application.yml` (host, port, username, password, database name).
+    * For **PostgreSQL**, update the database connection details in `src/main/resources/application.properties` or `application.yml`.
     * **H2** requires no additional configuration for development.
 
 3.  **Build the Application:**
@@ -51,10 +53,28 @@ Make sure you have the following installed on your system:
     ```bash
     mvn spring-boot:run
     ```
-    Alternatively, you can run the packaged JAR file from the `target` directory:
+    Or run the JAR:
     ```bash
     java -jar target/librarymanagement-0.0.1-SNAPSHOT.jar
     ```
+
+#### 🐳 Option 2: Run with Docker
+
+If you want to run the application using Docker and Docker Compose:
+
+1.  **Build and Start Containers:**
+    ```bash
+    docker-compose up
+    ```
+
+2.  **Stop Containers:**
+    ```bash
+    docker-compose down
+    ```
+
+3.  **Access the Application:**
+    * API Base URL: `http://localhost:8080`
+    * Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
 The application will be accessible at `http://localhost:8080`.
 

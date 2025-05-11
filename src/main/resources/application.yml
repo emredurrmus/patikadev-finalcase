@@ -6,7 +6,7 @@ spring:
   application:
     name: librarymanagement
   profiles:
-    active: local
+    active: dev
 
   # Spring Security - JWT configuration
   jwt:
