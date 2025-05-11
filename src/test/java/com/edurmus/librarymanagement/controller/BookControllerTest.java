@@ -9,6 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -120,5 +124,53 @@ class BookControllerTest {
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
         assertFalse(result.getBody().isEmpty());
+    }
+
+    @Test
+    void shouldSearchBooksAndReturnEmptyPage() {
+        String title = "NonExistentTitle";
+        String author = null;
+        String isbn = null;
+        BookGenre genre = null;
+        int page = 0;
+        int size = 10;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BookResponse> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(bookService.searchBooks(any(), eq(page), eq(size))).thenReturn(emptyPage);
+
+        ResponseEntity<Page<BookResponse>> response = bookController.searchBooks(title, author, isbn, genre, page, size);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().getContent().isEmpty());
+
+        verify(bookService).searchBooks(any(), eq(page), eq(size));
+    }
+
+    @Test
+    void shouldSearchBooksAndReturnNonEmptyPage() {
+        String title = "Clean Code";
+        String author = "Robert C. Martin";
+        String isbn = "0132350882";
+        BookGenre genre = BookGenre.EDUCATION;
+        int page = 0;
+        int size = 10;
+        Pageable pageable = PageRequest.of(page, size);
+
+        BookResponse book = createBookResponse(BOOK_ID, title, author, isbn, PUBLISH_DATE, PRICE, genre, DESCRIPTION, true);
+        Page<BookResponse> bookPage = new PageImpl<>(List.of(book), pageable, 1);
+
+        when(bookService.searchBooks(any(), eq(page), eq(size))).thenReturn(bookPage);
+
+        ResponseEntity<Page<BookResponse>> response = bookController.searchBooks(title, author, isbn, genre, page, size);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().getContent().isEmpty());
+        assertEquals(1, response.getBody().getTotalElements());
+        assertEquals("Clean Code", response.getBody().getContent().get(0).title());
+
+        verify(bookService).searchBooks(any(), eq(page), eq(size));
     }
 }

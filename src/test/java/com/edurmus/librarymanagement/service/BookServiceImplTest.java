@@ -3,8 +3,10 @@ package com.edurmus.librarymanagement.service;
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.book.BookSaveException;
 import com.edurmus.librarymanagement.model.dto.request.BookRequest;
+import com.edurmus.librarymanagement.model.dto.request.BookSearchRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.model.entity.Book;
+import com.edurmus.librarymanagement.model.enums.BookGenre;
 import com.edurmus.librarymanagement.repository.BookRepository;
 import com.edurmus.librarymanagement.service.impl.BookServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -180,6 +187,45 @@ class BookServiceImplTest {
 
         assertThrows(BookNotFoundException.class, () -> bookService.findByIsAvailable());
         log.info("shouldFindByAvailable_ThrowBookNotFoundException_whenErrorOccurs test passed.");
+    }
+
+    @Test
+    void searchBooks_ShouldReturnBooks_WhenValidSearchRequest() {
+        BookSearchRequest searchRequest = new BookSearchRequest("Java", "Author", "123456", BookGenre.FICTION);
+        Book book = Book.builder()
+                .title("Java")
+                .author("Author")
+                .isbn("123456")
+                .genre(BookGenre.FICTION)
+                .build();
+
+        List<Book> books = List.of(book);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Book> page = new PageImpl<>(books, pageable, books.size());
+
+        when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        Page<BookResponse> result = bookService.searchBooks(searchRequest, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals("Java", result.getContent().get(0).title());
+        verify(bookRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void searchBooks_ShouldReturnEmpty_WhenNoBooksFound() {
+        BookSearchRequest searchRequest = new BookSearchRequest("NonExistentTitle", null, null, null);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Book> page = new PageImpl<>(List.of(), pageable, 0);
+
+        when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        Page<BookResponse> result = bookService.searchBooks(searchRequest, 0, 10);
+
+        assertNotNull(result);
+        assertTrue(result.getContent().isEmpty());
+        verify(bookRepository).findAll(any(Specification.class), eq(pageable));
     }
 }
 
