@@ -200,6 +200,7 @@ erDiagram
     users ||--o{ user_roles : has
     role ||--o{ user_roles : has
 
+```
     book {
         BIGINT id PK
         VARCHAR title
@@ -211,7 +212,7 @@ erDiagram
         VARCHAR genre
         BOOLEAN is_available
     }
-
+```
     users {
         BIGINT id PK
         VARCHAR username UNIQUE
@@ -224,10 +225,14 @@ erDiagram
         BOOLEAN enabled
     }
 
+```
+
     role {
         BIGINT id PK
         VARCHAR user_role
     }
+
+```
 
     user_roles {
         BIGINT user_id FK
@@ -235,6 +240,7 @@ erDiagram
         PRIMARY KEY (user_id, role_id)
     }
 
+```
     borrowing {
         BIGINT id PK
         BIGINT user_id FK

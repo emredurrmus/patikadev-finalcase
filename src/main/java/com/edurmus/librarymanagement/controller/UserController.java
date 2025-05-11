@@ -36,21 +36,33 @@ public class UserController {
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Get user by ID (Librarian only)", description = "Retrieves a user by its ID")
     public ResponseEntity<UserDetailsResponse> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getById(id));
+        UserDetailsResponse user = userService.getById(id);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Update user by ID (Librarian only)", description = "Allows librarian user to update a user")
     public ResponseEntity<UserDetailsResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest userRequest) {
-        return ResponseEntity.ok(userService.updateUser(id, userRequest));
+        UserDetailsResponse updatedUser = userService.updateUser(id, userRequest);
+        if (updatedUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PutMapping("/role/{id}")
     @PreAuthorize("hasRole('LIBRARIAN')")
     @Operation(summary = "Update user role by ID (Librarian only)", description = "Allows librarian user to update the role of another user")
     public ResponseEntity<UserRoleResponse> updateUserRole(@Valid @RequestBody UserRoleRequest userRoleRequest, @PathVariable Long id) {
-        return ResponseEntity.ok(userService.updateUserRole(id, userRoleRequest));
+        UserRoleResponse updatedRole = userService.updateUserRole(id, userRoleRequest);
+        if (updatedRole == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedRole);
     }
 
     @DeleteMapping("/{id}")
