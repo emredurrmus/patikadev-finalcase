@@ -3,6 +3,8 @@ server:
 
 # Spring Profiles
 spring:
+  application:
+    name: librarymanagement
   profiles:
     active: local
 

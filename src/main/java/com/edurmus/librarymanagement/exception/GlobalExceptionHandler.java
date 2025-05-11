@@ -4,6 +4,7 @@ package com.edurmus.librarymanagement.exception;
 import com.edurmus.librarymanagement.exception.user.EmailAlreadyExistException;
 import com.edurmus.librarymanagement.exception.user.UsernameAlreadyExistException;
 import com.edurmus.librarymanagement.model.dto.response.ErrorResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

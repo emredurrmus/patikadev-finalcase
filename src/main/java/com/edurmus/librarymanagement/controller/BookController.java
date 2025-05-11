@@ -55,6 +55,11 @@ public class BookController {
     }
 
     @PreAuthorize("hasRole('LIBRARIAN') or hasRole('PATRON')")
+    @Operation(summary = "Search for books by title, author, ISBN, and genre", description = "Retrieves a list of books based on search criteria")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Books found by search criteria and pagination"),
+            @ApiResponse(responseCode = "404", description = "No books found by search criteria")
+    })
     @GetMapping("/search")
     public ResponseEntity<Page<BookResponse>> searchBooks(
             @RequestParam(required = false) String title,
@@ -95,7 +100,10 @@ public class BookController {
     }
 
     @Operation(summary = "Get all active books", description = "Retrieves a list of all active books")
-    @ApiResponse(responseCode = "200", description = "List of all active books")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of active books fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "No active books found")
+    })
     @GetMapping
     public ResponseEntity<List<BookResponse>> getAllBooks() {
         log.info("Fetching all active books");
@@ -103,7 +111,10 @@ public class BookController {
     }
 
     @Operation(summary = "Get all available (and active) books", description = "Retrieves a list of all available books")
-    @ApiResponse(responseCode = "200", description = "List of available books")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of available books fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "No available books found")
+    })
     @GetMapping("/available")
     public ResponseEntity<List<BookResponse>> getAvailableBooks() {
         log.info("Fetching available books");

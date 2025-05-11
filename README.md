@@ -140,6 +140,7 @@ Here's a summary of the main API endpoints:
 * **GET `/api/books/{id}`:** Get a specific book by ID (requires `Authorization: Bearer <your_token>`).
 * **DELETE `/api/books/{id}`:** Delete a specific book (requires `Authorization: Bearer <your_token>`).
 * **GET `/api/books`:** Get all active books (requires `Authorization: Bearer <your_token>`).
+* **GET `/api/books/search?title=...&author=...&isbn=...&genre=...`:** Search books by title, author, ISBN, or genre (requires `Authorization: Bearer <your_token>`).
 * **GET `/api/books/available`:** Get all active and available books (requires `Authorization: Bearer <your_token>`).
 
 ### 🔄 Borrowing

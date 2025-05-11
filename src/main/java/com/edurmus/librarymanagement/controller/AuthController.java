@@ -8,6 +8,7 @@ import com.edurmus.librarymanagement.service.UserService;
 import com.edurmus.librarymanagement.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,10 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login user", description = "Allows user to login")
-    @ApiResponse(responseCode = "200", description = "User successfully logged in")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User logged in successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<?> login(@RequestBody @Valid AuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
@@ -58,7 +62,10 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user", description = "Allows librarian user to register a new user")
-    @ApiResponse(responseCode = "201", description = "User successfully registered")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "404", description = "Error occurred while registering user")
+    })
     public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRequest userRequest) {
         log.info("Registering user: {}", userRequest.email());
         UserResponse savedUser = userService.register(userRequest);

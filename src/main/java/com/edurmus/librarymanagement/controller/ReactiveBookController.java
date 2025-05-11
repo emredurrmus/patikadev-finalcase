@@ -3,6 +3,7 @@ package com.edurmus.librarymanagement.controller;
 import com.edurmus.librarymanagement.model.dto.request.BookRequest;
 import com.edurmus.librarymanagement.model.dto.response.BookResponse;
 import com.edurmus.librarymanagement.service.ReactiveBookService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/reactive/books")
+@Tag(name = "Reactive Book Management (Optional)", description = "Operations related to book management")
 public class ReactiveBookController {
 
     private final ReactiveBookService bookService;
