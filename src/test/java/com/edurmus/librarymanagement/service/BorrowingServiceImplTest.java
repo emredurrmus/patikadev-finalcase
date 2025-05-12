@@ -1,5 +1,6 @@
 package com.edurmus.librarymanagement.service;
 
+import com.edurmus.librarymanagement.exception.book.BookAlreadyReturnedException;
 import com.edurmus.librarymanagement.exception.book.BookNotAvailableException;
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.borrow.BorrowingNotFoundException;
@@ -26,13 +27,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -48,6 +50,7 @@ class BorrowingServiceImplTest {
     @Mock private BorrowingRepository borrowingRepository;
     @Mock private UserRepository userRepository;
 
+    @Spy
     @InjectMocks
     private BorrowingServiceImpl borrowingService;
 
@@ -125,7 +128,7 @@ class BorrowingServiceImplTest {
         actualUser.setUsername("ahmet"); // different user
 
         borrowing.setUser(actualUser);
-        borrowing.setDueDate(LocalDate.now().minusDays(5));
+        borrowing.setDueDate(LocalDateTime.now().minusDays(5));
         borrowing.setId(1L);
 
 
@@ -146,31 +149,36 @@ class BorrowingServiceImplTest {
 
     @Test
     void shouldSetStatusReturned_whenBorrowingIsNotOverdue() {
-        User user = new User();
-        user.setUsername("testuser");
-
+        Borrowing borrowing = new Borrowing();
         Book book = new Book();
-        book.setId(1L);
         book.setAvailable(false);
 
-        Borrowing borrowing = new Borrowing();
-        borrowing.setId(1L);
+        User user = new User();
+        user.setUsername("testuser");
         borrowing.setUser(user);
         borrowing.setBook(book);
-        borrowing.setDueDate(LocalDate.now());
-        borrowing.setReturnDate(null);
+
+        borrowing.setDueDate(LocalDateTime.now().plusDays(1));
         borrowing.setStatus(BorrowingStatus.BORROWED);
+        borrowing.setId(1L);
 
         when(borrowingRepository.findById(1L)).thenReturn(Optional.of(borrowing));
         when(borrowingRepository.save(any(Borrowing.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        ReturnBookResponse response = borrowingService.returnBook(1L);
+        try (MockedStatic<SecurityUtils> mockedSecurity = mockStatic(SecurityUtils.class)) {
+            mockedSecurity.when(SecurityUtils::getCurrentUserName).thenReturn("testuser");
 
-        assertEquals(BorrowingStatus.RETURNED, response.borrowingDTO().getStatus());
-        assertFalse(response.isOverdue());
-        assertEquals(BigDecimal.ZERO, response.borrowingDTO().getFine());
+            ReturnBookResponse response = borrowingService.returnBook(1L);
 
-        verify(borrowingRepository).save(any(Borrowing.class));
+            assertEquals(BorrowingStatus.RETURNED, response.borrowingDTO().getStatus());
+            assertFalse(response.isOverdue());
+            assertEquals(BigDecimal.ZERO, response.borrowingDTO().getFine());
+
+            verify(borrowingRepository).save(any(Borrowing.class));
+            verify(bookRepository).save(any(Book.class));
+        }
     }
 
 
@@ -186,7 +194,7 @@ class BorrowingServiceImplTest {
 
         borrowing.setBook(book);
         borrowing.setUser(user);
-        borrowing.setDueDate(LocalDate.now().minusDays(5));
+        borrowing.setDueDate(LocalDateTime.now().minusDays(5));
 
         when(borrowingRepository.findById(1L)).thenReturn(Optional.of(borrowing));
         when(bookRepository.save(any())).thenReturn(book);
@@ -226,6 +234,16 @@ class BorrowingServiceImplTest {
         log.info("shouldReturnUserBorrowingHistory passed.");
     }
 
+    @Test
+    void shouldThrowBookAlreadyReturnedException_whenBookAlreadyReturned() {
+        Borrowing borrowing = new Borrowing();
+        borrowing.setId(1L);
+        borrowing.setReturnDate(LocalDateTime.now());
+
+        when(borrowingRepository.findById(anyLong())).thenReturn(Optional.of(borrowing));
+
+        assertThrows(BookAlreadyReturnedException.class, () -> borrowingService.returnBook(1L));
+    }
 
     @Test
     void shouldDisableUser_whenOverdueCountIsTwoOrMore() {
@@ -240,7 +258,7 @@ class BorrowingServiceImplTest {
 
         borrowing.setBook(book);
         borrowing.setUser(user);
-        borrowing.setDueDate(LocalDate.now().minusDays(5));
+        borrowing.setDueDate(LocalDateTime.now().minusDays(5));
 
         when(borrowingRepository.findById(1L)).thenReturn(Optional.of(borrowing));
         when(bookRepository.save(any())).thenReturn(book);
@@ -278,7 +296,7 @@ class BorrowingServiceImplTest {
         user.setEmail("emredurmus@example.com");
         borrowing.setUser(user);
 
-        when(borrowingRepository.findByReturnDateIsNullAndDueDateBefore(any()))
+        when(borrowingRepository.findByReturnDateAfterAndDueDate())
                 .thenReturn(List.of(borrowing));
 
         String report = borrowingService.generateOverdueReport();

@@ -29,6 +29,7 @@ public record UserRequest(
         String email,
 
         @JsonProperty("phone_number")
+        @NotBlank(message = "Phone number cannot be blank")
         @Pattern(
                 regexp = "^\\+?[0-9]{10,15}$",
                 message = "Phone number must be valid and contain 10 to 15 digits"

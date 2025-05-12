@@ -1,5 +1,6 @@
 package com.edurmus.librarymanagement.service.impl;
 
+import com.edurmus.librarymanagement.exception.book.BookAlreadyReturnedException;
 import com.edurmus.librarymanagement.exception.book.BookNotAvailableException;
 import com.edurmus.librarymanagement.exception.book.BookNotFoundException;
 import com.edurmus.librarymanagement.exception.borrow.BorrowingNotFoundException;
@@ -26,8 +27,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -77,8 +80,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         return Borrowing.builder()
                 .user(user)
                 .book(book)
-                .borrowingDate(LocalDate.now())
-                .dueDate(LocalDate.now().plusWeeks(2))
+                .borrowingDate(LocalDateTime.now())
+                .dueDate(LocalDateTime.now().plusWeeks(2))
                 .status(BorrowingStatus.BORROWED)
                 .fine(BigDecimal.ZERO)
                 .build();
@@ -92,8 +95,11 @@ public class BorrowingServiceImpl implements BorrowingService {
         Optional<Borrowing> borrowingOptional = borrowingRepository.findById(borrowingId);
         Borrowing borrowing = borrowingOptional.orElseThrow(() -> new BorrowingNotFoundException("Borrowing record not found with id: " + borrowingId));
 
-        borrowing.setReturnDate(LocalDate.now());
+        isAlreadyReturned(borrowing);
+        // If user does not have a borrowing record with this id, throw an exception
+        checkUserHasBorrowing(borrowing);
 
+        borrowing.setReturnDate(LocalDateTime.now());
         boolean isOverDue = borrowing.isOverdue();
         BigDecimal fine = BigDecimal.ZERO;
 
@@ -108,7 +114,13 @@ public class BorrowingServiceImpl implements BorrowingService {
         log.info("User '{}' is returning book with borrowing ID: {}", borrowing.getUser().getUsername(), borrowingId);
         BorrowingDTO borrowingDTO = BorrowingMapper.INSTANCE.toDto(savedBorrowing);
         updateBookAvailability(borrowing.getBook());
-        return new ReturnBookResponse(borrowingDTO, isOverDue, fine);
+        return new ReturnBookResponse(borrowingDTO, isOverDue);
+    }
+
+    private void isAlreadyReturned(Borrowing borrowing) {
+        if (borrowing.getReturnDate() != null) {
+            throw new BookAlreadyReturnedException("The book has already been returned");
+        }
     }
 
     private void updateBookAvailability(Book book) {
@@ -117,8 +129,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     private BigDecimal handleOverdueAndGetFine(Borrowing borrowing) {
-        checkUserHasBorrowing(borrowing);
-
         User user = borrowing.getUser();
         BigDecimal fine = borrowing.calculateOverdueFine();
         user.setOverdueFine(user.getOverdueFine().add(fine));
@@ -158,11 +168,10 @@ public class BorrowingServiceImpl implements BorrowingService {
         List<Borrowing> overdueList = findOverdueBorrowings();
 
         int totalOverdue = overdueList.size();
-        Map<User, Long> userOverdueCounts = groupBorrowingsByUser(overdueList);
+        Map<User, List<Borrowing>> userOverdueMap = groupBorrowingsByUser(overdueList);
 
-        StringBuilder reportBuilder = buildReportHeader(totalOverdue, userOverdueCounts.size());
-        appendUserOverdueDetails(userOverdueCounts, reportBuilder);
-
+        StringBuilder reportBuilder = buildReportHeader(totalOverdue, userOverdueMap.size());
+        appendUserOverdueDetails(userOverdueMap, reportBuilder);
         appendReportFooter(reportBuilder);
 
         log.info("Generating overdue book report...");
@@ -180,12 +189,21 @@ public class BorrowingServiceImpl implements BorrowingService {
                     """.formatted(totalOverdue, totalUsersWithOverdues));
     }
 
-    private void appendUserOverdueDetails(Map<User, Long> userOverdueCounts, StringBuilder reportBuilder) {
-        for (Map.Entry<User, Long> entry : userOverdueCounts.entrySet()) {
+    private void appendUserOverdueDetails(Map<User, List<Borrowing>> userOverdueMap, StringBuilder reportBuilder) {
+        for (Map.Entry<User, List<Borrowing>> entry : userOverdueMap.entrySet()) {
             User user = entry.getKey();
-            Long count = entry.getValue();
-            reportBuilder.append(" - %s (%s): %d book(s) overdue\n".formatted(
-                    user.getFirstName() + " " + user.getLastName(), user.getEmail(), count));
+            List<Borrowing> borrowings = entry.getValue();
+            int count = borrowings.size();
+            BigDecimal totalFine = borrowings.stream()
+                    .map(Borrowing::getFine)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            reportBuilder.append(" - %s (%s): %d book(s) overdue | Total fine: %.2f\n".formatted(
+                    user.getFirstName() + " " + user.getLastName(),
+                    user.getEmail(),
+                    count,
+                    totalFine
+            ));
         }
     }
 
@@ -193,16 +211,17 @@ public class BorrowingServiceImpl implements BorrowingService {
         reportBuilder.append("\nGenerated at: %s".formatted(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
 
-    private Map<User, Long> groupBorrowingsByUser(List<Borrowing> overdueList) {
+    private Map<User, List<Borrowing>> groupBorrowingsByUser(List<Borrowing> overdueList) {
         return overdueList.stream()
-                .collect(Collectors.groupingBy(Borrowing::getUser, Collectors.counting()));
+                .collect(Collectors.groupingBy(Borrowing::getUser));
     }
+
 
     private List<Borrowing> findOverdueBorrowings() {
-        return borrowingRepository.findByReturnDateIsNullAndDueDateBefore(LocalDate.now());
+        return borrowingRepository.findByReturnDateAfterAndDueDate();
     }
 
-    private User getCurrentUser() {
+    public User getCurrentUser() {
         String username = SecurityUtils.getCurrentUserName();
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with this username: " + username));

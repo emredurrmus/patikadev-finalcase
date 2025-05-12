@@ -34,6 +34,7 @@ public class User extends BaseEntity implements UserDetails {
 
     private String lastName;
 
+    @Column(nullable = false, unique = true)
     private String phoneNumber;
 
     @ManyToMany(fetch = FetchType.EAGER)

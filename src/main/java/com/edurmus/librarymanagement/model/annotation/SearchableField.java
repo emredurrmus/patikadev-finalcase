@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SearchableField {
-    ComparisonOperation operation() default ComparisonOperation .LIKE;
+    ComparisonOperation operation() default ComparisonOperation.LIKE;
 }

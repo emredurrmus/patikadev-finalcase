@@ -4,6 +4,5 @@ import java.math.BigDecimal;
 
 public record ReturnBookResponse(
         BorrowingDTO borrowingDTO,
-        boolean isOverdue,
-        BigDecimal fine
+        boolean isOverdue
 ) {}

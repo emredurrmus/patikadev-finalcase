@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Data
@@ -21,8 +21,8 @@ public class BorrowingDTO {
     private String username;
     private String bookTitle;
     private BorrowingStatus status;
-    private LocalDate borrowingDate;
-    private LocalDate dueDate;
-    private LocalDate returnDate;
+    private LocalDateTime borrowingDate;
+    private LocalDateTime dueDate;
+    private LocalDateTime returnDate;
     private BigDecimal fine;
 }

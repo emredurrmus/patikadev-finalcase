@@ -17,18 +17,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  liquibase:
-    image: liquibase/liquibase
-    container_name: liquibase
-    environment:
-      LIQUIBASE_CHANGELOG: classpath:db/changelog/db.changelog-master.xml
-      LIQUIBASE_URL: jdbc:postgresql://postgres:5432/librarydb
-      LIQUIBASE_USERNAME: postgres
-      LIQUIBASE_PASSWORD: 12345678
-    depends_on:
-      postgres:
-        condition: service_healthy
-    entrypoint: ["bash", "-c", "until pg_isready -h postgres -p 5432; do echo waiting for postgres; sleep 2; done; liquibase update"]
   app:
     build: .
     container_name: library_app

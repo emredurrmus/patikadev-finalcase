@@ -77,7 +77,9 @@
             </column>
             <column name="first_name" type="VARCHAR(100)"/>
             <column name="last_name" type="VARCHAR(100)"/>
-            <column name="phone_number" type="VARCHAR(20)"/>
+            <column name="phone_number" type="VARCHAR(20)">
+                <constraints nullable="false" unique="true" />
+            </column>
             <column name="overdue_fine" type="DECIMAL(10,2)" />
             <column name="enabled" type="BOOLEAN" />
         </createTable>
@@ -128,11 +130,11 @@
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR(20)" />
-            <column name="borrowing_date" type="DATE" />
-            <column name="due_date" type="DATE">
+            <column name="borrowing_date" type="TIMESTAMP WITH TIME ZONE" />
+            <column name="due_date" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
             </column>
-            <column name="return_date" type="DATE" />
+            <column name="return_date" type="TIMESTAMP WITH TIME ZONE" />
             <column name="fine" type="DECIMAL(10,2)" />
         </createTable>
     </changeSet>

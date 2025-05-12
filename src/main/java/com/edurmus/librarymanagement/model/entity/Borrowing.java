@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Builder
@@ -29,11 +29,11 @@ public class Borrowing extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private BorrowingStatus status;
 
-    private LocalDate borrowingDate;
+    private LocalDateTime borrowingDate;
 
-    private LocalDate dueDate;
+    private LocalDateTime dueDate;
 
-    private LocalDate returnDate;
+    private LocalDateTime returnDate;
 
     private BigDecimal fine;
 

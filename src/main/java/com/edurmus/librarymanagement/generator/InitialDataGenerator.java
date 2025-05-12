@@ -47,6 +47,7 @@ public class InitialDataGenerator {
                 .username("user")
                 .password(passwordEncoder.encode("pw135!."))
                 .email("user@gmail.com")
+                .phoneNumber("05356543256")
                 .enabled(true)
                 .roles(librarianRole)
                 .build();

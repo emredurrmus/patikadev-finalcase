@@ -2,10 +2,10 @@ package com.edurmus.librarymanagement.model.dto.response;
 
 import com.edurmus.librarymanagement.model.enums.BorrowingStatus;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record BorrowingSuccessResponse(String username,
                                        String bookTitle,
-                                       LocalDate dueDate,
+                                       LocalDateTime dueDate,
                                        BorrowingStatus status)
 {}

@@ -1,6 +1,9 @@
 package com.edurmus.librarymanagement.exception;
 
 
+import com.edurmus.librarymanagement.exception.book.BookAlreadyReturnedException;
+import com.edurmus.librarymanagement.exception.book.BookNotAvailableException;
+import com.edurmus.librarymanagement.exception.borrow.BorrowingNotFoundException;
 import com.edurmus.librarymanagement.exception.user.EmailAlreadyExistException;
 import com.edurmus.librarymanagement.exception.user.UsernameAlreadyExistException;
 import com.edurmus.librarymanagement.model.dto.response.ErrorResponse;
@@ -91,6 +94,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameAlreadyExistException.class)
     public ResponseEntity<String> handleUsernameAlreadyExistsException(UsernameAlreadyExistException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidEnum(IllegalArgumentException ex) {
+        if (ex.getMessage().contains("No enum constant")) {
+            return ResponseEntity.badRequest().body("Invalid book genre provided. Please provide a valid genre from the list.");
+        }
+        return ResponseEntity.badRequest().body("Invalid request.");
+    }
+
+    @ExceptionHandler(BorrowingNotFoundException.class)
+    public ResponseEntity<String> handleBorrowingNotFoundException(BorrowingNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("This user has not borrowed this book.");
+    }
+
+    @ExceptionHandler(BookNotAvailableException.class)
+    public ResponseEntity<String> handleBookNotAvailableException(BookNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("This book currently not available in the library.");
+    }
+
+    @ExceptionHandler(BookAlreadyReturnedException.class)
+    public ResponseEntity<String> handleBookAlreadyReturnedException(BookAlreadyReturnedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("This book has already been returned.");
     }
 
 }

@@ -53,7 +53,7 @@ Make sure you have the following installed on your system:
     ```bash
     mvn spring-boot:run
     ```
-    Or run the JAR:
+    Alternatively, you can run the packaged JAR file from the `target` directory:
     ```bash
     java -jar target/librarymanagement-0.0.1-SNAPSHOT.jar
     ```

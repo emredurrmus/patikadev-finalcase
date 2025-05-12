@@ -11,8 +11,6 @@ public interface BorrowingMapper {
 
     BorrowingMapper INSTANCE = Mappers.getMapper(BorrowingMapper.class);
 
-    Borrowing toEntity(BorrowingDTO borrowingDTO);
-
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "bookTitle", source = "book.title")
     BorrowingSuccessResponse toSuccessResponse(Borrowing borrowing);
@@ -21,8 +19,5 @@ public interface BorrowingMapper {
     @Mapping(target = "bookTitle", source = "book.title")
     BorrowingDTO toDto(Borrowing borrowing);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
-            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-    void updateEntity(@MappingTarget Borrowing borrowing, BorrowingDTO borrowingDTO);
 
 }

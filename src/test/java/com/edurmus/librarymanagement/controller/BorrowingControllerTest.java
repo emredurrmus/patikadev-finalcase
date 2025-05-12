@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,7 +40,7 @@ class BorrowingControllerTest {
         BorrowingSuccessResponse responseMock = new BorrowingSuccessResponse(
                 USERNAME,
                 BOOK_TITLE,
-                LocalDate.now().plusDays(14),
+                LocalDateTime.now().plusDays(14),
                 BorrowingStatus.BORROWED
         );
 
@@ -55,8 +56,8 @@ class BorrowingControllerTest {
 
     @Test
     void shouldReturnBook() {
-        BorrowingDTO borrowingDTO = createBorrowingDTO(BORROWING_ID, BorrowingStatus.RETURNED, LocalDate.now());
-        ReturnBookResponse responseMock = new ReturnBookResponse(borrowingDTO, false, BigDecimal.ZERO);
+        BorrowingDTO borrowingDTO = createBorrowingDTO(BORROWING_ID, BorrowingStatus.RETURNED, LocalDateTime.now());
+        ReturnBookResponse responseMock = new ReturnBookResponse(borrowingDTO, false);
 
         when(borrowingService.returnBook(BORROWING_ID)).thenReturn(responseMock);
 
@@ -104,14 +105,14 @@ class BorrowingControllerTest {
     }
 
     // Helper methods
-    private BorrowingDTO createBorrowingDTO(Long id, BorrowingStatus status, LocalDate returnDate) {
+    private BorrowingDTO createBorrowingDTO(Long id, BorrowingStatus status, LocalDateTime returnDate) {
         return new BorrowingDTO(
                 id,
                 USERNAME,
                 BOOK_TITLE,
                 status,
-                LocalDate.now().minusDays(5),
-                LocalDate.now().plusDays(9),
+                LocalDateTime.now().minusDays(5),
+                LocalDateTime.now().plusDays(9),
                 returnDate,
                 BigDecimal.ZERO
         );
