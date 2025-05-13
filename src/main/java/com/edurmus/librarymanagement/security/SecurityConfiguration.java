@@ -36,7 +36,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/register", "/auth/login").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Its just a reactive endpoints test not used in production
+                        // Reactive endpoints are not fully compatible with traditional Spring Security configuration,
+                        //  Therefore, access is temporarily permitted for these test-only endpoints.
                         .requestMatchers("/api/reactive/books/**").permitAll()
                         .anyRequest().authenticated()
                 )

@@ -11,6 +11,7 @@ This project is built using the following technologies:
 * **☕ Java:** 21
 * **🚀 Spring Boot:** 3.4.5
 * **💾 Spring Data JPA:** For database interactions.
+* **🐳 Docker:** For containerization and environment management.
 * **🐘 PostgreSQL:** The primary relational database.
 * **🧪 H2 Database:** In-memory database for development and testing.
 * **🛡️ Spring Security:** For application security and authorization.
@@ -20,6 +21,11 @@ This project is built using the following technologies:
 * **🗺️ MapStruct:** For efficient object mapping.
 * **🔑 JWT (io.jsonwebtoken:jjwt):** For secure authentication and authorization.
 * **📝 SpringDoc OpenAPI:** For automatic API documentation (Swagger UI).
+
+## API Collection
+
+[View and Run the Postman Collection](https://elements.getpostman.com/redirect?entityId=33508046-bebcf996-16ce-43a3-af3a-f65f4a8e4ede&entityType=collection)
+
 
 ## 🚀 Getting Started
 
