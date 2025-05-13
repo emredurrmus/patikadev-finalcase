@@ -16,7 +16,9 @@ import com.edurmus.librarymanagement.repository.BookRepository;
 import com.edurmus.librarymanagement.repository.BorrowingRepository;
 import com.edurmus.librarymanagement.repository.UserRepository;
 import com.edurmus.librarymanagement.service.BorrowingService;
+import com.edurmus.librarymanagement.util.FineCalculator;
 import com.edurmus.librarymanagement.util.SecurityUtils;
+import com.edurmus.librarymanagement.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,13 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,6 +49,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Transactional
     public BorrowingSuccessResponse borrowBook(Long bookId) {
         User user = getCurrentUser();
         log.info("User '{}' attempting to borrow book {}",  user.getUsername(), bookId);
@@ -95,27 +94,37 @@ public class BorrowingServiceImpl implements BorrowingService {
         Optional<Borrowing> borrowingOptional = borrowingRepository.findById(borrowingId);
         Borrowing borrowing = borrowingOptional.orElseThrow(() -> new BorrowingNotFoundException("Borrowing record not found with id: " + borrowingId));
 
-        isAlreadyReturned(borrowing);
-        // If user does not have a borrowing record with this id, throw an exception
-        checkUserHasBorrowing(borrowing);
+        validateBorrowing(borrowing);
 
         borrowing.setReturnDate(LocalDateTime.now());
-        boolean isOverDue = borrowing.isOverdue();
-        BigDecimal fine = BigDecimal.ZERO;
 
-        if (isOverDue) {
-            fine = handleOverdueAndGetFine(borrowing);
-            borrowing.setStatus(BorrowingStatus.OVERDUE);
-        } else {
-            borrowing.setStatus(BorrowingStatus.RETURNED);
-        }
+        boolean isOverDue = borrowing.isOverdue();
+        BigDecimal fine = processReturnStatusAndFine(borrowing, isOverDue);
         borrowing.setFine(fine);
         Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
         log.info("User '{}' is returning book with borrowing ID: {}", borrowing.getUser().getUsername(), borrowingId);
+        updateBookAvailability(savedBorrowing.getBook());
+
         BorrowingDTO borrowingDTO = BorrowingMapper.INSTANCE.toDto(savedBorrowing);
-        updateBookAvailability(borrowing.getBook());
         return new ReturnBookResponse(borrowingDTO, isOverDue);
     }
+
+    private void validateBorrowing(Borrowing borrowing) {
+        isAlreadyReturned(borrowing);
+        checkUserHasBorrowing(borrowing);
+    }
+
+    private BigDecimal processReturnStatusAndFine(Borrowing borrowing, boolean isOverdue) {
+        if (isOverdue) {
+            borrowing.setStatus(BorrowingStatus.OVERDUE);
+            return handleOverdueAndGetFine(borrowing);
+        } else {
+            borrowing.setStatus(BorrowingStatus.RETURNED);
+            return BigDecimal.ZERO;
+        }
+    }
+
 
     private void isAlreadyReturned(Borrowing borrowing) {
         if (borrowing.getReturnDate() != null) {
@@ -165,28 +174,17 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public String generateOverdueReport() {
+        log.info("Generating overdue book report...");
         List<Borrowing> overdueList = findOverdueBorrowings();
-
         int totalOverdue = overdueList.size();
         Map<User, List<Borrowing>> userOverdueMap = groupBorrowingsByUser(overdueList);
 
-        StringBuilder reportBuilder = buildReportHeader(totalOverdue, userOverdueMap.size());
+        StringBuilder reportBuilder = new StringBuilder();
+        reportBuilder.append(StringUtils.buildReportHeader(totalOverdue, userOverdueMap.size()));
         appendUserOverdueDetails(userOverdueMap, reportBuilder);
-        appendReportFooter(reportBuilder);
+        reportBuilder.append(StringUtils.buildReportFooter(LocalDateTime.now()));
 
-        log.info("Generating overdue book report...");
         return reportBuilder.toString();
-    }
-
-    private StringBuilder buildReportHeader(int totalOverdue, int totalUsersWithOverdues) {
-        return new StringBuilder()
-                .append("""
-                    OVERDUE BOOK REPORT
-                    ----------------------
-                    Total Overdue Books: %d
-                    Total Users with Overdues: %d
-
-                    """.formatted(totalOverdue, totalUsersWithOverdues));
     }
 
     private void appendUserOverdueDetails(Map<User, List<Borrowing>> userOverdueMap, StringBuilder reportBuilder) {
@@ -194,21 +192,10 @@ public class BorrowingServiceImpl implements BorrowingService {
             User user = entry.getKey();
             List<Borrowing> borrowings = entry.getValue();
             int count = borrowings.size();
-            BigDecimal totalFine = borrowings.stream()
-                    .map(Borrowing::getFine)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            reportBuilder.append(" - %s (%s): %d book(s) overdue | Total fine: %.2f\n".formatted(
-                    user.getFirstName() + " " + user.getLastName(),
-                    user.getEmail(),
-                    count,
-                    totalFine
-            ));
-        }
-    }
+            BigDecimal totalFine = FineCalculator.calculateTotalFine(borrowings);
 
-    private void appendReportFooter(StringBuilder reportBuilder) {
-        reportBuilder.append("\nGenerated at: %s".formatted(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+            reportBuilder.append(StringUtils.formatUserOverdueLine(user, count, totalFine));
+        }
     }
 
     private Map<User, List<Borrowing>> groupBorrowingsByUser(List<Borrowing> overdueList) {

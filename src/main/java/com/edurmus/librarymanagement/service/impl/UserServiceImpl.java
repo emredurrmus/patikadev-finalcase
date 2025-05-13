@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,27 +33,12 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
 
     @Override
+    @Transactional
     public UserResponse register(UserRequest request) {
         validateUserRequest(request);
-        User user = new User();
-        user.setUsername(request.username());
-        user.setFirstName(request.firstName());
-        user.setLastName(request.lastName());
-        user.setEmail(request.email());
-        user.setPhoneNumber(request.phoneNumber());
-        user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRoles(roleRepository.findByUserRole(UserRole.ROLE_PATRON));
+        User user = mapUserFromRequest(request);
         userRepository.save(user);
         return userMapper.toDto(user);
-    }
-
-    private void validateUserRequest(UserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistException("User already exists with email: " + request.email());
-        }
-        if (userRepository.existsByUsername(request.username())) {
-            throw new UsernameAlreadyExistException("User already exists with username: " + request.username());
-        }
     }
 
 
@@ -70,24 +56,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDetailsResponse updateUser(Long id, UserRequest request) {
+        validateUserRequest(request);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        user.setUsername(request.username());
-        user.setFirstName(request.firstName());
-        user.setLastName(request.lastName());
-        user.setEmail(request.email());
-        user.setPhoneNumber(request.phoneNumber());
-        if (request.password() != null) {
-            user.setPassword(passwordEncoder.encode(request.password()));
-        }
-
+        updateUserFields(user, request);
         return userMapper.toDetailsDto(userRepository.save(user));
     }
 
 
     @Override
+    @Transactional
     public UserRoleResponse updateUserRole(Long id, UserRoleRequest userRoleRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
@@ -99,9 +80,8 @@ public class UserServiceImpl implements UserService {
     }
 
 
-
-
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException("User not found");
@@ -111,5 +91,32 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         log.info("User with ID {} set as inactive", id);
     }
+
+
+    private void validateUserRequest(UserRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new EmailAlreadyExistException("User already exists with email: " + request.email());
+        }
+        if (userRepository.existsByUsername(request.username())) {
+            throw new UsernameAlreadyExistException("User already exists with username: " + request.username());
+        }
+    }
+
+    private User mapUserFromRequest(UserRequest request) {
+        User user = new User();
+        updateUserFields(user, request);
+        user.setRoles(roleRepository.findByUserRole(UserRole.ROLE_PATRON));
+        return user;
+    }
+
+    private void updateUserFields(User user, UserRequest request) {
+        user.setUsername(request.username());
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        user.setPhoneNumber(request.phoneNumber());
+        user.setPassword(passwordEncoder.encode(request.password()));
+    }
+
 }
 

@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
 
     @Override
+    @Transactional
     public BookResponse save(BookRequest bookRequest) {
         try {
             Book book = BookMapper.INSTANCE.toEntity(bookRequest);
@@ -42,6 +44,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional
     public BookResponse update(Long id, BookRequest bookRequest) {
         try {
             Book book = bookRepository.findById(id)
@@ -56,6 +59,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
         try {
             Book book = bookRepository.findById(id)

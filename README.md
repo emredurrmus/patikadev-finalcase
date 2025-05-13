@@ -24,7 +24,7 @@ This project is built using the following technologies:
 
 ## API Collection
 
-[View and Run the Postman Collection](https://elements.getpostman.com/redirect?entityId=33508046-bebcf996-16ce-43a3-af3a-f65f4a8e4ede&entityType=collection)
+📈 **[View and Run the Postman Collection](https://elements.getpostman.com/redirect?entityId=33508046-bebcf996-16ce-43a3-af3a-f65f4a8e4ede&entityType=collection)**
 
 
 ## 🚀 Getting Started

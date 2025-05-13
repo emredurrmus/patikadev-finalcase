@@ -1,7 +1,7 @@
 package com.edurmus.librarymanagement.model.entity;
 
 import com.edurmus.librarymanagement.model.enums.BorrowingStatus;
-import com.edurmus.librarymanagement.util.AppUtil;
+import com.edurmus.librarymanagement.util.FineCalculator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,7 +43,7 @@ public class Borrowing extends BaseEntity {
 
     public BigDecimal calculateOverdueFine() {
         if (isOverdue()) {
-            return AppUtil.calculateOverdueFine(dueDate);
+            return FineCalculator.calculateOverdueFine(dueDate);
         }
         return BigDecimal.ZERO;
     }
