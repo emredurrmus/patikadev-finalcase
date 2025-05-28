@@ -1,4 +1,0 @@
-package com.edurmus.librarymanagement.repository;
-
-public interface RoleRepositort {
-}
