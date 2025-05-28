@@ -1,4 +1,0 @@
-package com.edurmus.librarymanagement.model.dto.response;
-
-public class ReturnBookResponse {
-}
